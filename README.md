@@ -34,5 +34,5 @@ Scoring as many points/balls shot as possible. Each ball equals 1 point.
     3. Diagonaly
     4. Combination of above
   <br />
-#### Game Sketch --> [Here](https://github.com/StanZalewski/Project-Game/blob/main/Additional_info/Game_sketch.pdf)
-#### Classes diagram --> [Here](https://github.com/StanZalewski/Project-Game/blob/main/Additional_info/Class_diagram.pdf)
+#### Game Sketch --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/Game_sketch.pdf)
+#### Classes diagram --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/Class_diagram.pdf)
