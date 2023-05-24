@@ -7,6 +7,16 @@
 
 using namespace std;
 
+// trzeba przeniesc chyba do Game
+std::vector<sf::Color> colors = {
+        sf::Color::Black,
+        sf::Color::Red,
+        sf::Color::Green,
+        sf::Color::Yellow,
+        sf::Color::Blue,
+        sf::Color(128, 0, 128),
+    };
+
 class Game {
    private:
     int score_;
@@ -121,15 +131,6 @@ public:
 
     void addNewRow(int row)
 {
-    std::vector<sf::Color> colors = {
-        sf::Color::Black,
-        sf::Color::Red,
-        sf::Color::Green,
-        sf::Color::Yellow,
-        sf::Color::Blue,
-        sf::Color(128, 0, 128),
-    };
-
     // Resize the wall_ vector if needed
     if (wall_.size() <= row)
         {
@@ -180,16 +181,6 @@ public:
 
     const int width = 40;
     const int height = 37;
-
-
-    std::vector<sf::Color> colors = {
-        sf::Color::Blue,
-        sf::Color::Red,
-        sf::Color::Green,
-        sf::Color::Yellow,
-        sf::Color::Black,
-        sf::Color(128, 0, 128)
-    };
 
     std::vector<sf::CircleShape> menuItems_;
 
