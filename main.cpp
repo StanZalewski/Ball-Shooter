@@ -10,8 +10,9 @@
 
 using namespace std;
 
-//Game_wall class declaration from Game class
+//Game_wall and Game_menu class declaration from Game class
 class Game_wall;
+class Game_menu;
 
 // Game class inicialization for later use by Game_wall
 class Game
@@ -73,8 +74,8 @@ public:
     return textures;
 }
 
-    void start(Game_wall &objects_wall, int score);
-    void dis(Game_wall &objects_wall, sf::RenderWindow &window);
+    void start(Game_wall &objects_wall, Game_menu &objects_menu, int score);
+    void dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window);
 };
 
 //Vector for string specyfic colors 
@@ -358,41 +359,106 @@ public:
 
     }
 
- void moveWall()
-{
-    for (int i = height_ - 2; i >= 0; i--)
+    void moveWall()
     {
-        for (int j = 0; j < width_; j++)
+        for (int i = height_ - 2; i >= 0; i--)
         {
-            if (wall_[i][j] != nullptr)
+            for (int j = 0; j < width_; j++)
             {
-                std::swap(wall_[i][j], wall_[i + 1][j]);
-                if (wall_[i + 1][j] != nullptr)
+                if (wall_[i][j] != nullptr)
                 {
-                    sf::Vector2f new_position(j * 45.f, (i + 1) * 45.f);
-                    wall_[i + 1][j]->setPosition(new_position);
+                    std::swap(wall_[i][j], wall_[i + 1][j]);
+                    if (wall_[i + 1][j] != nullptr)
+                    {
+                        sf::Vector2f new_position(j * 45.f, (i + 1) * 45.f);
+                        wall_[i + 1][j]->setPosition(new_position);
+                    }
                 }
             }
         }
     }
-}
 
 };
 
-// class Game_menu
-// {
-// private:
-//     friend class Game;
+class Game_menu
+{
+private:
+    friend class Game;
+    std::vector<Object* > menu_;
+    int numOfBalls_;
 
-// public:
-// };
+public:
+    Game_menu(int numOfBalls): numOfBalls_(numOfBalls){
+        initializeMenu();
+    }
+    
+    void initializeMenu()
+    {
+       menu_ = std::vector<Object *> (numOfBalls_);
+    }
+
+    int getNumOfBalls(){
+        return numOfBalls_;
+    }
+
+    int random_ball(int a,int b)
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dis(a, b);
+        return dis(gen);
+    }
+    void addNewBall(int score){
+        std::vector<sf::Color> vec_colors = vec_color();
+        if (score<50){
+            Balls *ball = new Balls(sf::Vector2f(20.f, 20.f), sf::Vector2f(45.f, 1600.f), vec_colors[random_ball(1,3)], false);
+            menu_[0]=ball;
+        }
+        else if(score < 150 && score >=50){
+            Balls *ball = new Balls(sf::Vector2f(20.f, 20.f), sf::Vector2f(70.f, 1600.f), vec_colors[random_ball(1,4)], false);
+            menu_[0]=ball;
+        }
+        else{
+            Balls *ball = new Balls(sf::Vector2f(20.f, 20.f), sf::Vector2f(70.f, 1600.f), vec_colors[random_ball(1,5)], false);
+                menu_[0]=ball;
+        }
+    }
+    void  moveMenu(){
+        for (int i = numOfBalls_- 2 ; i >= 0; i--)
+        {
+            if (i<numOfBalls_- 2){
+                if (menu_[i]!= nullptr)
+                {
+                    std::swap(menu_[i], menu_[i + 1]);
+                    if (menu_[i + 1] != nullptr)
+                    {
+                        sf::Vector2f new_position( (((i+1) * 90.f)+45.f), 1600.f);
+                        menu_[i + 1]->setPosition(new_position);
+                    }
+                }
+            }
+            else if (i==(numOfBalls_- 2)){
+                if (menu_[i]!= nullptr)
+                {
+                    std::swap(menu_[i], menu_[i + 1]);
+                    if (menu_[i + 1] != nullptr)
+                    {
+                        sf::Vector2f new_position( 877.f, 1450.f);
+                        menu_[i + 1]->setPosition(new_position);
+                    }
+                }
+
+            }
+        }
+    }
 
 
+};
 
     // Two remaining funciton for Game class needed to be here couse of variables inicialization for compiler
 
     //Start func to load all objects on window
-    void Game::start(Game_wall &objects_wall, int score)
+    void Game::start(Game_wall &objects_wall, Game_menu &objects_menu, int score)
     {
         setScore(0);
 
@@ -407,9 +473,18 @@ public:
             
         }
         objects_wall.addNewRow(score);
+        
+
+        objects_menu.initializeMenu();
+
+        for (int i = 1; i <= objects_menu.getNumOfBalls() ; i++){
+            objects_menu.addNewBall(score);
+            objects_menu.moveMenu();
+        }
+        objects_menu.addNewBall(score);
     }
     //Displaying whole game here
-    void Game::dis(Game_wall & objects_wall, sf::RenderWindow &window)
+    void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
     {
         for (int i = 0; i < objects_wall.height_; i++)
         {
@@ -423,6 +498,16 @@ public:
                 }
             }
         }
+
+
+        for (int i = 0; i < objects_menu.getNumOfBalls(); i++)
+        {
+            if (objects_menu.menu_[i] != nullptr)
+                {
+                    window.draw(*(objects_menu.menu_[i]));
+                }
+
+        }
         
         
     }
@@ -434,11 +519,12 @@ int main()
 {
     //Class objects inicialization
     Game_wall objects_wall(40,37);
+    Game_menu objects_menu(8);
     Game game(0);
     //game loading
     
     sf::RenderWindow window(sf::VideoMode(1800, 1680), "Ball Shooter Game");
-    game.start(objects_wall, game.getScore());
+    game.start(objects_wall, objects_menu, game.getScore());
     // sf::RectangleShape redLine(sf::Vector2f(gameWall.width_ * 45.f, 20.f));
     // redLine.setFillColor(sf::Color::Red);
     // redLine.setPosition(0.f, 1300.f);
@@ -461,7 +547,7 @@ int main()
         window.clear(sf::Color(240, 220, 180));
 
         //displaying whole game
-        game.dis(objects_wall, window);
+        game.dis(objects_wall, objects_menu, window);
         // // Draw the red line
         // window.draw(redLine);
 
