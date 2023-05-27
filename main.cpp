@@ -358,7 +358,7 @@ public:
         }
 
     }
-
+    //Function moves rows of balls a one row down
     void moveWall()
     {
         for (int i = height_ - 2; i >= 0; i--)
@@ -408,6 +408,7 @@ public:
         std::uniform_int_distribution<int> dis(a, b);
         return dis(gen);
     }
+    //Function adds new ball to queue
     void addNewBall(int score){
         std::vector<sf::Color> vec_colors = vec_color();
         if (score<50){
@@ -423,6 +424,7 @@ public:
                 menu_[0]=ball;
         }
     }
+    //Function moves balls one move forward.
     void  moveMenu(){
         for (int i = numOfBalls_- 2 ; i >= 0; i--)
         {
@@ -464,8 +466,10 @@ public:
 
         int ball_start_height = 14;
 
+        //Makeing 2d vector with empty cells
         objects_wall.initializeWall();
 
+        //loop adding row and moving it lower
         for (int i = 0; i < ball_start_height; i++)
         {
             objects_wall.addNewRow(score);
@@ -474,9 +478,10 @@ public:
         }
         objects_wall.addNewRow(score);
         
-
+        // Making vector withempty cells for balls in queue
         objects_menu.initializeMenu();
 
+        //loop adding ball and moving to shooting position and ther rest after
         for (int i = 1; i <= objects_menu.getNumOfBalls() ; i++){
             objects_menu.addNewBall(score);
             objects_menu.moveMenu();
@@ -486,6 +491,7 @@ public:
     //Displaying whole game here
     void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
     {
+        //Game wall displayed here
         for (int i = 0; i < objects_wall.height_; i++)
         {
             for (int j = 0; j < objects_wall.width_; j++)
@@ -499,7 +505,7 @@ public:
             }
         }
 
-
+        //Game menu dipsplayed here 
         for (int i = 0; i < objects_menu.getNumOfBalls(); i++)
         {
             if (objects_menu.menu_[i] != nullptr)
@@ -519,12 +525,16 @@ int main()
 {
     //Class objects inicialization
     Game_wall objects_wall(40,37);
+
+    //Game_menu with inicialization with 8 balls in queue
     Game_menu objects_menu(8);
+    //Game_menu with inicialization with score starting from 0
     Game game(0);
     //game loading
     
     sf::RenderWindow window(sf::VideoMode(1800, 1680), "Ball Shooter Game");
     game.start(objects_wall, objects_menu, game.getScore());
+
     // sf::RectangleShape redLine(sf::Vector2f(gameWall.width_ * 45.f, 20.f));
     // redLine.setFillColor(sf::Color::Red);
     // redLine.setPosition(0.f, 1300.f);
@@ -548,6 +558,7 @@ int main()
 
         //displaying whole game
         game.dis(objects_wall, objects_menu, window);
+
         // // Draw the red line
         // window.draw(redLine);
 
