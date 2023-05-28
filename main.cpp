@@ -181,14 +181,14 @@ public:
 class Bomb : public Balls
 {
 protected:
-    int destructions_;
+    sf::Sprite ballSprite;
 
 public:
-    Bomb(const sf::Vector2f &size_, const sf::Vector2f &position_, sf::Color color_, bool ifBomb_, int destructions_)
-    : Balls(size_, position_, color_, ifBomb_), destructions_(destructions_) {}
+    Bomb(const sf::Vector2f &size_, const sf::Vector2f &position_, sf::Color color_, bool ifBomb_, sf::Sprite ballSprite)
+    : Balls(size_, position_, color_, ifBomb_), ballSprite(ballSprite) {}
 
-    int getDesctructions(){
-        return destructions_;
+    sf::Sprite getDesctructions(){
+        return ballSprite;
     }
 
 };
@@ -197,16 +197,18 @@ class Game_wall
 {
 private:
     friend class Game;
-    std::vector<std::vector<Object *> > wall_;
-    int width_ ;
-    int height_ ;
+    std::vector<std::vector<Object*>> wall_;
+    int width_;
+    int height_;
+
 
 public:
-   Game_wall(const int width_, const int height_) : width_(width_), height_(height_)
-{
-    initializeWall();
-}
-    
+   Game_wall(const int width, const int height)
+        : width_(width), height_(height)
+    {
+        initializeWall();
+    }
+
     int getWidth() const
     {
         return width_;
@@ -234,7 +236,49 @@ public:
         return dis(gen);
     }
 
- 
+    std::vector<sf::Texture> texture()      
+    {
+        std::vector<sf::Texture> textures;
+        sf::Texture vertical;
+        if (!vertical.loadFromFile("textures/vertical.png")) {
+            std::cout << "Texture VERTICAL fail to load" << std::endl;
+        }
+        textures.push_back(vertical);
+
+        sf::Texture horizontal;
+        if (!horizontal.loadFromFile("textures/horizontal.png")) {
+            std::cout << "Texture HORIZONTAL fail to load" << std::endl;
+        }
+        textures.push_back(horizontal);
+
+        sf::Texture cross;
+        if (!cross.loadFromFile("textures/cross.png")) {
+            std::cout << "Texture Cross fail to load" << std::endl;
+        }
+        textures.push_back(cross);
+
+        sf::Texture cross_L2R;
+        if (!cross_L2R.loadFromFile("textures/cross_L2R.png")) {
+            std::cout << "Texture Cross_L2R fail to load" << std::endl;
+        }
+        textures.push_back(cross_L2R);
+
+        sf::Texture cross_R2L;
+        if (!cross_R2L.loadFromFile("textures/cross_R2L.png")) {
+            std::cout << "Texture Cross_R2L fail to load" << std::endl;
+        }
+        textures.push_back(cross_R2L);
+
+        sf::Texture all_direct;
+        if (!all_direct.loadFromFile("textures/all_direct.png")) {
+            std::cout << "Texture ALL_DIRECT fail to load" << std::endl;
+        }
+        textures.push_back(all_direct);
+
+        return textures;
+    }
+    
+    std::vector<sf::Texture> textures_ = texture();
 
     //Function crating new row at the top each move or during game creation
     void addNewRow(int score , float resOfScreen)
@@ -268,7 +312,7 @@ public:
                 previousColor = vec_colors[1];
             }
             
-            int randomDestruciton = (std::rand() % 6) + 1;
+            int randomDestruciton = (std::rand() % 3) + 0;
             //Special condition for different levels in game 50, 150, and third level for more than 150 points
             if (player_score < 50)
             {
@@ -294,7 +338,17 @@ public:
                 }
                 else
                 {
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, randomDestruciton);
+                    sf::Sprite ballSprite_;
+                    ballSprite_.setTexture(textures_[randomDestruciton]);
+                    if(resOfScreen==2)
+                    {
+                        ballSprite_.setScale(0.25f, 0.25f);
+                    }
+                    else
+                    {
+                        ballSprite_.setScale(0.5f, 0.5f);
+                    }
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
 
                     line.push_back(bomb);
                 }
@@ -327,8 +381,11 @@ public:
                     line.push_back(ball);
                 }
                 else
-                {
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i + 1) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, randomDestruciton);
+                {   
+                    sf::Sprite ballSprite_;
+                    ballSprite_.setTexture(textures_[randomDestruciton]);
+                    ballSprite_.setScale(0.25f, 0.25f);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i + 1) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
                     line.push_back(bomb);
                 }
             }
@@ -366,7 +423,10 @@ public:
                 }
                 else
                 {
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i + 1) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, randomDestruciton);
+                    sf::Sprite ballSprite_;
+                    ballSprite_.setTexture(textures_[randomDestruciton]);
+                    ballSprite_.setScale(0.25f, 0.25f);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i + 1) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
                     line.push_back(bomb);
                 }
             }
@@ -488,6 +548,13 @@ public:
         //Makeing 2d vector with empty cells
         objects_wall.initializeWall();
 
+        // Get the vector of textures
+        std::vector<sf::Texture> textures = texture();
+
+        // Create the Game_wall object with the vector of textures
+        Game_wall game_wall(objects_wall.getWidth(), objects_wall.getHeight());
+
+
         //loop adding row and moving it lower
         for (int i = 0; i < ball_start_height; i++)
         {
@@ -511,18 +578,28 @@ public:
     void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
     {
         //Game wall displayed here
-        for (int i = 0; i < objects_wall.height_; i++)
-        {
-            for (int j = 0; j < objects_wall.width_; j++)
-            {
-                if (objects_wall.wall_[i][j] != nullptr)
-                {
-                
-                window.draw(*(objects_wall.wall_[i][j]));
-                
+        for (int i = 0; i < objects_wall.getHeight(); i++) {
+        for (int j = 0; j < objects_wall.getWidth(); j++) {
+            Object *object = objects_wall.wall_[i][j];
+
+            if (object != nullptr) {
+                sf::Vector2f position = object->getPosition();
+
+                object->setPosition(position);
+                window.draw(*object);
+
+                if (dynamic_cast<Bomb*>(object) != nullptr) {
+                    Bomb* bomb = dynamic_cast<Bomb*>(object);
+                    sf::Sprite ballSprite = bomb->getDesctructions();
+                    position.x += 2;
+                    position.y += 1;
+                    ballSprite.setPosition(position);
+                    window.draw(ballSprite);
                 }
+
             }
         }
+    }
 
         //Game menu dipsplayed here 
         for (int i = 0; i < objects_menu.getNumOfBalls(); i++)
@@ -591,4 +668,5 @@ int main()
     }
 
     return 0;
+
 }
