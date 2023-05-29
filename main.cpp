@@ -52,47 +52,6 @@ public:
     }
     
 
-       // texture func - input and store all textures in one vector
-    std::vector<sf::Texture> texture() {
-    std::vector<sf::Texture> textures;
-    sf::Texture vertical;
-    if (!vertical.loadFromFile("textures/vertical.png")) {
-        std::cout << "Texture VERTICAL fail to load" << std::endl;
-    }
-    textures.push_back(vertical);
-
-    sf::Texture horizontal;
-    if (!horizontal.loadFromFile("textures/horizontal.png")) {
-        std::cout << "Texture HORIZONTAL fail to load" << std::endl;
-    }
-    textures.push_back(horizontal);
-
-    sf::Texture cross;
-    if (!cross.loadFromFile("textures/cross.png")) {
-        std::cout << "Texture Cross fail to load" << std::endl;
-    }
-    textures.push_back(cross);
-
-    sf::Texture cross_L2R;
-    if (!cross_L2R.loadFromFile("textures/cross_L2R.png")) {
-        std::cout << "Texture Cross_L2R fail to load" << std::endl;
-    }
-    textures.push_back(cross_L2R);
-
-    sf::Texture cross_R2L;
-    if (!cross_R2L.loadFromFile("textures/cross_R2L.png")) {
-        std::cout << "Texture Cross_R2L fail to load" << std::endl;
-    }
-    textures.push_back(cross_R2L);
-
-    sf::Texture all_direct;
-    if (!all_direct.loadFromFile("textures/all_direct.png")) {
-        std::cout << "Texture ALL_DIRECT fail to load" << std::endl;
-    }
-    textures.push_back(all_direct);
-
-    return textures;
-}
 
     void start(Game_wall &objects_wall, Game_menu &objects_menu, int score , float resOfScreen);
     void dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window);
@@ -293,7 +252,7 @@ public:
         {
             int random_number = random_num();
             int player_score = score;
-            float initialStartPoint_y;
+            float initialStartPoint_y = 0;
             // cheching if i is not a first ball
             sf::Color previousColor ;
             if (i > 0)
@@ -318,22 +277,22 @@ public:
             {
                 if (random_number <= 40)
                 {
-                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f(((i) * 44.f)/resOfScreen, initialStartPoint_y), previousColor, false);
+                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f(((i) * 45.f)/resOfScreen, initialStartPoint_y), previousColor, false);
                     line.push_back(ball);
                 }
                 else if (random_number <= 55)
                 {
-                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[1], false);
+                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[1], false);
                     line.push_back(ball);
                 }
                 else if (random_number <= 70)
                 {
-                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[2], false);
+                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[2], false);
                     line.push_back(ball);
                 }
                 else if (random_number <= 85)
                 {
-                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[3], false);
+                    Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[3], false);
                     line.push_back(ball);
                 }
                 else
@@ -348,7 +307,7 @@ public:
                     {
                         ballSprite_.setScale(0.5f, 0.5f);
                     }
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 44.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
 
                     line.push_back(bomb);
                 }
@@ -548,8 +507,7 @@ public:
         //Makeing 2d vector with empty cells
         objects_wall.initializeWall();
 
-        // Get the vector of textures
-        std::vector<sf::Texture> textures = texture();
+
 
         // Create the Game_wall object with the vector of textures
         Game_wall game_wall(objects_wall.getWidth(), objects_wall.getHeight());
@@ -578,7 +536,7 @@ public:
     void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
     {
         //Game wall displayed here
-        for (int i = 0; i < objects_wall.getHeight(); i++) {
+    for (int i = 0; i < objects_wall.getHeight(); i++) {
         for (int j = 0; j < objects_wall.getWidth(); j++) {
             Object *object = objects_wall.wall_[i][j];
 
@@ -591,8 +549,8 @@ public:
                 if (dynamic_cast<Bomb*>(object) != nullptr) {
                     Bomb* bomb = dynamic_cast<Bomb*>(object);
                     sf::Sprite ballSprite = bomb->getDesctructions();
-                    position.x += 2;
-                    position.y += 1;
+                    position.x += 2.5;
+                    position.y += 2;
                     ballSprite.setPosition(position);
                     window.draw(ballSprite);
                 }
@@ -601,7 +559,7 @@ public:
         }
     }
 
-        //Game menu dipsplayed here 
+        //Game menu displayed here 
         for (int i = 0; i < objects_menu.getNumOfBalls(); i++)
         {
             if (objects_menu.menu_[i] != nullptr)
