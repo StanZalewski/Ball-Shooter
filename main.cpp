@@ -264,11 +264,12 @@ private:
     sf::Sprite ballSprite_;
 
 public:
-   Game_wall(const int width_, const int height_) : width_(width_), height_(height_)
-{
-    initializeWall();
-}
-    
+   Game_wall(const int width, const int height)
+        : width_(width), height_(height)
+    {
+        initializeWall();
+    }
+
     int getWidth() const
     {
         return width_;
@@ -803,6 +804,7 @@ public:
                         window.draw(ballSprite);
                     }
                 }
+
             }
         }
         
@@ -872,4 +874,5 @@ int main()
     }
 
     return 0;
+
 }
