@@ -33,7 +33,7 @@ Scoring as many points/balls shot as possible. Each ball equals 1 point.
     2. Horizontaly
     3. Combination of above
   <br />
-#### In game photo --> [Here]([#### Game Sketch --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/In_game_photo.png)
+#### In game photo --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/In_game_photo.png) <br />
 #### Classes diagram --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/Class_diagram.pdf)
 
 ### To play the game:
