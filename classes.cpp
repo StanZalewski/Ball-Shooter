@@ -66,6 +66,7 @@ void Game::initiateBlackLine(float resolution){
     blackLine.setPosition(0.f, 1550.f/resolution);
 }
 
+//Funtion that displays movment of arrow when cursor moves
 void Game::arrowDisplay(sf::RenderWindow &window){
     sf::Vector2i cursorPosition = sf::Mouse::getPosition(window);
 
@@ -78,6 +79,7 @@ void Game::arrowDisplay(sf::RenderWindow &window){
     window.draw(arrow);
 }
 
+//Score display funtion
 void Game::scoreDisplay(sf::RenderWindow &window){
     sf::Font font;
     font.loadFromFile("Fonts/font.ttf");
@@ -92,6 +94,7 @@ void Game::scoreDisplay(sf::RenderWindow &window){
     window.draw(scoreText);
 }
 
+//function thak keeps the game in 60 Frames/Second
 void Game::FPS(sf::Clock &clock, sf::Time &timePerFrame, sf::Time &elapsed){
 
 
@@ -114,8 +117,7 @@ void Game::addPositionBomb(sf::Vector2f position){
     }
 }
 
-
-
+//function that kepps all the colors in one vector with one call
 std::vector<sf::Color> vec_color()
 {
     std::vector<sf::Color> vec_color_ ;
@@ -491,6 +493,7 @@ void  Game_menu::moveMenu(float resOfScreen){
     }
 }
 
+//After pressing the mose this function will shoot the ball in the selected place by a cursor 
 void Game::shootIfClicked(Game_menu &objects_menu, sf::RenderWindow &window, sf::Event &event) {
     // Checking if mouse was pressed. If so, setting velocity at which ball will move
     if (event.type == sf::Event::MouseButtonPressed) {
@@ -508,7 +511,7 @@ void Game::shootIfClicked(Game_menu &objects_menu, sf::RenderWindow &window, sf:
         }
     }
 }
-
+//function moving the ball on the screen
 void Game::moveShotBall (sf::Time &elapsed, Game_menu &objects_menu){
     //calculating time in seconds to retreive it's destination
     float dtAsSeconds = elapsed.asSeconds();
@@ -519,7 +522,7 @@ void Game::moveShotBall (sf::Time &elapsed, Game_menu &objects_menu){
         objects_menu.menu_[objects_menu.getNumOfBalls()-1]->setPosition(position);
     }
 }
-
+//Function keeps ball in the window frame
 void Game::borderColision(sf::RenderWindow &window, Game_menu &objects_menu){
     if (objects_menu.menu_[objects_menu.getNumOfBalls()-1]!=nullptr){
         sf::Vector2u windowSize = window.getSize();
@@ -551,6 +554,7 @@ void Game::borderColision(sf::RenderWindow &window, Game_menu &objects_menu){
 
 }
 
+//Function checking if ball hit other ball on the wall
 bool Game::ballColision(sf::RenderWindow& window, Game_menu& objects_menu, Game_wall& objects_wall) {
     if (objects_menu.menu_[objects_menu.getNumOfBalls() - 1] != nullptr) {
         for (int i = 0; i < objects_wall.height_; i++) {
@@ -601,7 +605,7 @@ bool Game::ballColision(sf::RenderWindow& window, Game_menu& objects_menu, Game_
     return false;
 }
 
-
+//Checking if wall of balls has hit the wall
 void Game::touchingRedLine(sf::RenderWindow &window, Game_menu &objects_menu, Game_wall &objects_wall){
 
     //function checking if any of the balls where behind red line making the game end
@@ -621,6 +625,7 @@ void Game::touchingRedLine(sf::RenderWindow &window, Game_menu &objects_menu, Ga
     }
 }
 
+//Funtion that triggers direction of bombs and desroys intended balls in veritcal horizontal or both conditions.
 void Game::bombDetonate(Game_wall &objects_wall, int index_x, int index_y){
 
     Bomb* bomb = dynamic_cast<Bomb*>(objects_wall.wall_[index_y][index_x]);
@@ -665,7 +670,7 @@ void Game::bombDetonate(Game_wall &objects_wall, int index_x, int index_y){
 }
 
 
-// function chaecking and destroing the ball.
+// function checking and destroing the intended balls with the same color.
 void Game::destruction(Game_wall& objects_wall, int index_x, int index_y, int destructionCount) {
 
     sf::Color main_ball;
@@ -804,6 +809,7 @@ void Game::destruction(Game_wall& objects_wall, int index_x, int index_y, int de
     }
 }
 
+//animating the bomb explosion with explosion of balls and vibration of bombs.
 void Game::animate(sf::RenderWindow &window){
 
     if(detonation_==true){
@@ -842,6 +848,7 @@ void Game::animate(sf::RenderWindow &window){
                 detonation_=false;
             }
         }
+        //animation bo ball explsion without any bomb
         else{
             if (explosionTimer_ >= sf::seconds(0.001f) && explosionTimer_ < sf::seconds(0.65f))
             {
@@ -904,6 +911,7 @@ void Game::start(Game_wall &objects_wall, Game_menu &objects_menu)
 
 }
 
+//function that keeps track of all player's moves and counts score-amount of balls shot down
 void Game::game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window, sf::Time &elapsed, sf::Clock &clock){
 
     moveShotBall (elapsed, objects_menu); //Moving ball with desired velocity sotred in velocityOfBall'
@@ -928,7 +936,7 @@ void Game::game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::Rende
     explosionTimer_ += sf::seconds(deltaTime);
 }
 
-//Displaying whole game here
+//Displaying whole game here- Wall, Menu, Lines, Animations
 void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
 {
     //RedLine gets dipslayed here
