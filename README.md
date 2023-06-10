@@ -31,8 +31,12 @@ Scoring as many points/balls shot as possible. Each ball equals 1 point.
     This type of ball serves as a bomb. They add a dynamic aspect to the game. Depending on which direction the arrows are pointing, the bomb will detonate through the whole map in the following possible scenarios:
     1. Verticaly
     2. Horizontaly
-    3. Diagonaly
-    4. Combination of above
+    3. Combination of above
   <br />
 #### Game Sketch --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/Game_sketch.pdf)
 #### Classes diagram --> [Here](https://github.com/StanZalewski/Project-Ball-Shooter/blob/main/INFO/Class_diagram.pdf)
+
+### To play the game:
+   1. Download the github repository <br />
+   2. Download the SFML Library from --> [Here](https://www.sfml-dev.org/download/sfml/2.5.1/) OR [Here](https://github.com/SFML/SFML.git) <br />
+   3. That's all !!!
