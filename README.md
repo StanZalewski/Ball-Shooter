@@ -38,5 +38,5 @@ Scoring as many points/balls shot as possible. Each ball equals 1 point.
 
 ### To play the game:
    1. Download the github repository <br />
-   2. Download the SFML Library from --> [Here](https://www.sfml-dev.org/download/sfml/2.5.1/) OR [Here](https://github.com/SFML/SFML.git) <br />
+   2. Download the SFML Library from --> [Here](https://www.sfml-dev.org/download/sfml/2.5.1/) or [Here](https://github.com/SFML/SFML.git) <br />
    3. That's all !!!
