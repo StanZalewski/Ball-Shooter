@@ -29,6 +29,17 @@ private:
 
     sf::Vector2f velocityOfBall;
 
+    int index_x_;
+    int index_y_;
+
+    //Variables for game animations
+    std::vector<sf::Vector2f> positionBomb_;
+    std::vector<sf::Vector2f> positionBall_;
+    bool detonation_;
+    sf::Texture bombTexture_;
+    sf::Texture explosionTexture_;
+    sf::Time explosionTimer_;
+
 public:
     Game(int score_) : score_(score_) {}
 
@@ -70,6 +81,19 @@ public:
         arrow.setRotation(0);
     }
     
+    void initiateDectructionTextures(){
+        if (!explosionTexture_.loadFromFile("textures/explosion.png"))
+        {
+            std::cout << "Failed to load explosion.png" << std::endl;
+        }
+
+        sf::Texture bombTexture;
+        if (!bombTexture_.loadFromFile("textures/bomb.png"))
+        {
+            std::cout << "Failed to load bomb.png" << std::endl;
+        }
+    }
+    
     //Building red a nd balck line in the two funcitons below
     void initiateRedLine(float resolution){
         redLine.setSize((sf::Vector2f(1800.f/resolution, 10.f/resolution)));
@@ -95,6 +119,20 @@ public:
         window.draw(arrow);
     }
 
+    void scoreDisplay(sf::RenderWindow &window){
+        sf::Font font;
+        font.loadFromFile("Fonts/font.ttf");
+
+        sf::Text scoreText;
+        scoreText.setFont(font);
+        scoreText.setString("SCORE:  " + std::to_string(score_));
+        scoreText.setCharacterSize(60/resOfScreen);
+        scoreText.setFillColor(sf::Color::Black);
+        scoreText.setPosition(1500/resOfScreen, 1580/resOfScreen);
+
+        window.draw(scoreText);
+    }
+
     void FPS(sf::Clock &clock, sf::Time &timePerFrame, sf::Time &elapsed){
 
         
@@ -106,55 +144,27 @@ public:
         }
     }
 
-    // texture func - input and store all textures in one vector
-    std::vector<sf::Texture> texture() {
-    std::vector<sf::Texture> textures;
-    sf::Texture vertical;
-    if (!vertical.loadFromFile("textures/vertical.png")) {
-        std::cout << "Texture VERTICAL fail to load" << std::endl;
+    void addPositionBall(sf::Vector2f position) {
+        if (std::find(positionBall_.begin(), positionBall_.end(), position) == positionBall_.end()) {
+            positionBall_.push_back(position);
+        }
     }
-    textures.push_back(vertical);
-
-    sf::Texture horizontal;
-    if (!horizontal.loadFromFile("textures/horizontal.png")) {
-        std::cout << "Texture HORIZONTAL fail to load" << std::endl;
+    void addPositionBomb(sf::Vector2f position){
+        if (std::find(positionBomb_.begin(), positionBomb_.end(), position) == positionBomb_.end()){
+            positionBomb_.push_back(position);
+        }
     }
-    textures.push_back(horizontal);
-
-    sf::Texture cross;
-    if (!cross.loadFromFile("textures/cross.png")) {
-        std::cout << "Texture Cross fail to load" << std::endl;
-    }
-    textures.push_back(cross);
-
-    sf::Texture cross_L2R;
-    if (!cross_L2R.loadFromFile("textures/cross_L2R.png")) {
-        std::cout << "Texture Cross_L2R fail to load" << std::endl;
-    }
-    textures.push_back(cross_L2R);
-
-    sf::Texture cross_R2L;
-    if (!cross_R2L.loadFromFile("textures/cross_R2L.png")) {
-        std::cout << "Texture Cross_R2L fail to load" << std::endl;
-    }
-    textures.push_back(cross_R2L);
-
-    sf::Texture all_direct;
-    if (!all_direct.loadFromFile("textures/all_direct.png")) {
-        std::cout << "Texture ALL_DIRECT fail to load" << std::endl;
-    }
-    textures.push_back(all_direct);
-
-    return textures;
-}
     
     void shootIfClicked(Game_menu &objects_menu, sf::RenderWindow &window, sf::Event &event);
     void moveShotBall (sf::Time &elapsed, Game_menu &objects_menu);
     void borderColision(sf::RenderWindow &window, Game_menu &objects_menu);
     bool ballColision(sf::RenderWindow &window, Game_menu &objects_menu , Game_wall &objects_wall);
     void touchingRedLine(sf::RenderWindow &window, Game_menu &objects_menu , Game_wall &objects_wall);
+    void bombDetonate(Game_wall &objects_wall, int index_x, int index_y);
+    void destruction(Game_wall& objects_wall, int index_x, int index_y, int destructionCount);
+    void animate(sf::RenderWindow &window);
     void start(Game_wall &objects_wall, Game_menu &objects_menu);
-    void game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window, sf::Time &elapsed);
+    void game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window, sf::Time &elapsed, sf::Clock &clock);
     void dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window);
 };
 
@@ -166,12 +176,11 @@ std::vector<sf::Color> vec_color()
         vec_color_.push_back(sf::Color(209, 109, 106));
         vec_color_.push_back(sf::Color(157, 194, 132));
         vec_color_.push_back(sf::Color(120, 157, 229));
-        vec_color_.push_back(sf::Color(222, 207, 105));
-        vec_color_.push_back(sf::Color(61,39,108));
+        vec_color_.push_back(sf::Color(244, 140, 251));
+        vec_color_.push_back(sf::Color(175,175,175));
         vec_color_.push_back(sf::Color(107, 34, 70));
         return vec_color_;
     }
-
 
 //Object class inicialization with class Balls inheriting form Object and Bomb inheriting form Balls
 
@@ -242,13 +251,18 @@ class Bomb : public Balls
 {
 protected:
     sf::Sprite ballSprite;
+    int nrOfDetonation;
 
 public:
-    Bomb(const sf::Vector2f &size_, const sf::Vector2f &position_, sf::Color color_, bool ifBomb_, sf::Sprite ballSprite)
-    : Balls(size_, position_, color_, ifBomb_), ballSprite(ballSprite) {}
+    Bomb(const sf::Vector2f &size_, const sf::Vector2f &position_, sf::Color color_, bool ifBomb_, sf::Sprite ballSprite ,int nrOfDetonation)
+    : Balls(size_, position_, color_, ifBomb_), ballSprite(ballSprite), nrOfDetonation(nrOfDetonation) {}
 
     sf::Sprite getDesctructions(){
         return ballSprite;
+    }
+
+    int getNrOfDetonation(){
+        return nrOfDetonation;
     }
 
 };
@@ -318,12 +332,6 @@ public:
         }
         textures.push_back(cross);
 
-        sf::Texture all_direct;
-        if (!all_direct.loadFromFile("textures/all_direct.png")) {
-            std::cout << "Texture ALL_DIRECT fail to load" << std::endl;
-        }
-        textures.push_back(all_direct);
-
         return textures;
     }
     
@@ -367,24 +375,24 @@ public:
             
             int randomDestruciton = (std::rand() % 3);
             //Special condition for different levels in game 50, 150, and third level for more than 150 points
-            if (player_score < 50)
+            if (player_score < 150)
             {
-                if (random_number <= 40)
+                if (random_number <= 25)
                 {
                     Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f(((i) * 45.f)/resOfScreen, initialStartPoint_y), previousColor, false);
                     line.push_back(ball);
                 }
-                else if (random_number <= 55)
+                else if (random_number <= 40)
                 {
                     Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[1], false);
                     line.push_back(ball);
                 }
-                else if (random_number <= 70)
+                else if (random_number <= 68)
                 {
                     Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[2], false);
                     line.push_back(ball);
                 }
-                else if (random_number <= 85)
+                else if (random_number <= 93)
                 {
                     Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[3], false);
                     line.push_back(ball);
@@ -394,12 +402,12 @@ public:
 
                     ballSprite_.setTexture(textures_[randomDestruciton]);
                     ballSprite_.setScale(0.5f/resOfScreen, 0.5f/resOfScreen);
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_, randomDestruciton);
 
                     line.push_back(bomb);
                 }
             }
-            else if (player_score < 150 && player_score >=50)
+            else if (player_score < 350 && player_score >=150)
             {
                 if (random_number <= 35)
                 {
@@ -430,7 +438,7 @@ public:
                 {
                     ballSprite_.setTexture(textures_[randomDestruciton]);
                     ballSprite_.setScale(0.5f/resOfScreen, 0.5f/resOfScreen);
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_, randomDestruciton);
 
                     line.push_back(bomb);
                 }
@@ -471,7 +479,7 @@ public:
                 {
                     ballSprite_.setTexture(textures_[randomDestruciton]);
                     ballSprite_.setScale(0.5f/resOfScreen, 0.5f/resOfScreen);
-                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_);
+                    Bomb *bomb = new Bomb(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f((i) * 45.f/resOfScreen, initialStartPoint_y), vec_colors[0], true, ballSprite_, randomDestruciton);
 
                     line.push_back(bomb);
                 }
@@ -537,11 +545,11 @@ public:
     //Function adds new ball to queue
     void addNewBall(int score, float resOfScreen){
         std::vector<sf::Color> vec_colors = vec_color();
-        if (score<50){
+        if (score<150){
             Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f(44.f/resOfScreen, 1600.f/resOfScreen), vec_colors[random_ball(1,3)], false);
             menu_[0]=ball;
         }
-        else if(score < 150 && score >=50){
+        else if(score < 350 && score >=150){
             Balls *ball = new Balls(sf::Vector2f(20.f/resOfScreen, 20.f/resOfScreen), sf::Vector2f(44.f/resOfScreen, 1600.f/resOfScreen), vec_colors[random_ball(1,4)], false);
             menu_[0]=ball;
         }
@@ -587,8 +595,8 @@ public:
 };
 
 
-    // Remaining funciton for Game class. Needed to be here couse of variables inicialization for compiler
-    void Game::shootIfClicked(Game_menu &objects_menu, sf::RenderWindow &window, sf::Event &event) {
+// Remaining funciton for Game class. Needed to be here couse of variables inicialization for compiler
+void Game::shootIfClicked(Game_menu &objects_menu, sf::RenderWindow &window, sf::Event &event) {
     // Checking if mouse was pressed. If so, setting velocity at which ball will move
     if (event.type == sf::Event::MouseButtonPressed) {
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
@@ -599,25 +607,25 @@ public:
             if(positionOfBall.x==878.f/resOfScreen && positionOfBall.y ==1450.f/resOfScreen) {
                 sf::Vector2f displacement(mousePosition.x - positionOfBall.x, mousePosition.y - positionOfBall.y);
                 float distance = std::sqrt(displacement.x * displacement.x + displacement.y * displacement.y);
-                float speed = 350.0f/resOfScreen;
+                float speed = 430.0f/resOfScreen;
                 velocityOfBall = displacement / distance * speed;
             }
         }
     }
 }
 
-    void Game::moveShotBall (sf::Time &elapsed, Game_menu &objects_menu){
+void Game::moveShotBall (sf::Time &elapsed, Game_menu &objects_menu){
         //calculating time in seconds to retreive it's destination
         float dtAsSeconds = elapsed.asSeconds();
         if (objects_menu.menu_[objects_menu.getNumOfBalls()-1]!=nullptr){
             sf::Vector2f position=objects_menu.menu_[objects_menu.getNumOfBalls()-1]->getPosition();
-        //objects_menu.menu_[objects_menu.getNumOfBalls()-1]->move(velocityOfBall * dtAsSeconds);
+        
         position+=velocityOfBall * dtAsSeconds;
         objects_menu.menu_[objects_menu.getNumOfBalls()-1]->setPosition(position);
         }
     }
 
-    void Game::borderColision(sf::RenderWindow &window, Game_menu &objects_menu){
+void Game::borderColision(sf::RenderWindow &window, Game_menu &objects_menu){
         if (objects_menu.menu_[objects_menu.getNumOfBalls()-1]!=nullptr){
             sf::Vector2u windowSize = window.getSize();
             float radius= objects_menu.menu_[objects_menu.getNumOfBalls()-1]->getSize();
@@ -648,18 +656,15 @@ public:
         
     }
 
-    bool Game::ballColision(sf::RenderWindow &window, Game_menu &objects_menu , Game_wall &objects_wall){
-        if (objects_menu.menu_[objects_menu.getNumOfBalls()-1]!=nullptr){
-            for (int i = 0; i < objects_wall.height_; i++)
-            {
-                for (int j = 0; j < objects_wall.width_; j++)
-                {
-                    if (objects_wall.wall_[i][j] != nullptr)
-                    {
-                        //Checking here if they colide
-                        sf::Vector2f position1 = objects_menu.menu_[objects_menu.getNumOfBalls()-1]->getPosition();
+bool Game::ballColision(sf::RenderWindow& window, Game_menu& objects_menu, Game_wall& objects_wall) {
+        if (objects_menu.menu_[objects_menu.getNumOfBalls() - 1] != nullptr) {
+            for (int i = 0; i < objects_wall.height_; i++) {
+                for (int j = 0; j < objects_wall.width_; j++) {
+                    if (objects_wall.wall_[i][j] != nullptr) {
+                        //Checking here if they collide
+                        sf::Vector2f position1 = objects_menu.menu_[objects_menu.getNumOfBalls() - 1]->getPosition();
                         sf::Vector2f position2 = objects_wall.wall_[i][j]->getPosition();
-                        float radius1 = objects_menu.menu_[objects_menu.getNumOfBalls()-1]->getSize();
+                        float radius1 = objects_menu.menu_[objects_menu.getNumOfBalls() - 1]->getSize();
                         float radius2 = objects_wall.wall_[i][j]->getSize();
 
                         // Calculate the distance between the centers of the circles
@@ -669,22 +674,28 @@ public:
 
                         // Check if the circles are colliding
                         if (distance <= radius1 + radius2) {
-                            if (position1.x < position2.x - radius2) { //left
-                                sf::Vector2f new_position((j-1) * 45.f/resOfScreen, (i) * 45.f/resOfScreen);
-                                objects_menu.menu_[objects_menu.getNumOfBalls()-1]->setPosition(new_position);
-                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls()-1],objects_wall.wall_[i+1][j]);
+                            if (position1.x < position2.x - radius2) { // left
+                                sf::Vector2f new_position((j - 1) * 45.f / resOfScreen, (i) * 45.f / resOfScreen);
+                                objects_menu.menu_[objects_menu.getNumOfBalls() - 1]->setPosition(new_position);
+                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls() - 1], objects_wall.wall_[i][j - 1]);
+                                index_y_=i;
+                                index_x_=j-1;
                                 return true;
-                            } 
-                            else if (position1.x > position2.x + radius2) { //right
-                                sf::Vector2f new_position((j+1) * 45.f/resOfScreen, (i) * 45.f/resOfScreen);
-                                objects_menu.menu_[objects_menu.getNumOfBalls()-1]->setPosition(new_position);
-                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls()-1],objects_wall.wall_[i+1][j]);
+                            }
+                            else if (position1.x > position2.x + radius2) { // right
+                                sf::Vector2f new_position((j + 1) * 45.f / resOfScreen, (i) * 45.f / resOfScreen);
+                                objects_menu.menu_[objects_menu.getNumOfBalls() - 1]->setPosition(new_position);
+                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls() - 1], objects_wall.wall_[i][j + 1]);
+                                index_y_=i;
+                                index_x_=j+1;
                                 return true;
-                            } 
-                            else { //bottom
-                                sf::Vector2f new_position(j * 45.f/resOfScreen, (i + 1) * 45.f/resOfScreen);
-                                objects_menu.menu_[objects_menu.getNumOfBalls()-1]->setPosition(new_position);
-                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls()-1],objects_wall.wall_[i+1][j]); 
+                            }
+                            else { // bottom
+                                sf::Vector2f new_position(j * 45.f / resOfScreen, (i + 1) * 45.f / resOfScreen);
+                                objects_menu.menu_[objects_menu.getNumOfBalls() - 1]->setPosition(new_position);
+                                std::swap(objects_menu.menu_[objects_menu.getNumOfBalls() - 1], objects_wall.wall_[i + 1][j]);
+                                index_y_=i+1;
+                                index_x_=j;
                                 return true;
                             }
                         }
@@ -695,16 +706,11 @@ public:
         return false;
     }
 
-    void Game::touchingRedLine(sf::RenderWindow &window, Game_menu &objects_menu , Game_wall &objects_wall){
+
+void Game::touchingRedLine(sf::RenderWindow &window, Game_menu &objects_menu, Game_wall &objects_wall){
 
         //function checking if any of the balls where behind red line making the game end
-        int end;
-        if(resOfScreen==2){
-            end=31;
-        }
-        else{
-            end=32;
-        }
+        int end=31;
         for (int i = 0; i < objects_wall.height_; i++)
         {
             for (int j = 0; j < objects_wall.width_; j++)
@@ -712,22 +718,269 @@ public:
                 if (objects_wall.wall_[i][j] != nullptr){
                     //printing final score in terminal after the red line is crossed
                     if (i==end){
-                        std::cout<<"Congratulations your score: "<<score_<<"!!!"<<std::endl;
                         window.close();
+                        std::cout<<"Congratulations your score: "<<score_<<"!!!"<<std::endl;
                     }
                 }
             }
         }
     }
 
+void Game::bombDetonate(Game_wall &objects_wall, int index_x, int index_y){
+
+        Bomb* bomb = dynamic_cast<Bomb*>(objects_wall.wall_[index_y][index_x]);
+        int typeOfBomb = bomb->getNrOfDetonation();
+        if (typeOfBomb==0){//vertical 
+            for(int i=0;i<=30;i++){
+                if (objects_wall.wall_[i][index_x]!=nullptr){
+                    addPositionBall(objects_wall.wall_[i][index_x]->getPosition());
+                    objects_wall.wall_[i][index_x]=nullptr;
+                    score_+=1;
+                }
+            }
+        }
+
+        if (typeOfBomb==1){//horizontal
+            for(int j=0;j<=39;j++){
+                if (objects_wall.wall_[index_y][j]!=nullptr){
+                    addPositionBall(objects_wall.wall_[index_y][j]->getPosition());
+                    objects_wall.wall_[index_y][j]=nullptr;
+                    score_+=1;
+                }
+                
+            }
+        }
+
+        if (typeOfBomb==2){//all directions
+            for(int i=0;i<=30;i++){
+                if (objects_wall.wall_[i][index_x]!=nullptr){
+                    addPositionBall(objects_wall.wall_[i][index_x]->getPosition());
+                    objects_wall.wall_[i][index_x]=nullptr;
+                    score_+=1;
+                }
+            }
+            for(int j=0;j<=39;j++){
+                if (objects_wall.wall_[index_y][j]!=nullptr){
+                    addPositionBall(objects_wall.wall_[index_y][j]->getPosition());
+                    objects_wall.wall_[index_y][j]=nullptr;
+                    score_+=1;
+                }
+            }
+        }
+    }
+
+
+    // function chaecking and destroing the ball.
+void Game::destruction(Game_wall& objects_wall, int index_x, int index_y, int destructionCount) {
+
+        sf::Color main_ball;
+        sf::Color ball_left;
+        sf::Color ball_right;
+        sf::Color ball_bottom;
+        sf::Color ball_top;
+
+        if (objects_wall.wall_[index_y][index_x] != nullptr) {
+            main_ball = objects_wall.wall_[index_y][index_x]->getFillColor();
+        }
+
+        //ball color and destruction check for top side
+        if (index_y > 0 && objects_wall.wall_[index_y - 1][index_x] != nullptr) {
+            ball_top = objects_wall.wall_[index_y - 1][index_x]->getFillColor();
+            if (main_ball == ball_top) {
+                destructionCount++;
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+                destruction(objects_wall, index_x, index_y - 1, destructionCount);
+            }
+            else if (ball_top==sf::Color::Black){
+                if (objects_wall.wall_[index_y-1][index_x] != nullptr) {
+                    addPositionBomb(objects_wall.wall_[index_y-1][index_x]->getPosition()); 
+                }
+                bombDetonate(objects_wall, index_x, index_y-1);
+                
+            }
+            else if (destructionCount > 0) {
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+            }
+        }
+
+        //ball color and destruction check for  left side
+        if (index_x > 0 && objects_wall.wall_[index_y][index_x - 1] != nullptr) {
+            ball_left = objects_wall.wall_[index_y][index_x - 1]->getFillColor();
+            if (main_ball == ball_left) {
+
+                destructionCount++;
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+                destruction(objects_wall, index_x - 1, index_y, destructionCount);
+            }
+            else if (ball_left==sf::Color::Black){
+                if (objects_wall.wall_[index_y][index_x-1] != nullptr) {
+                    addPositionBomb(objects_wall.wall_[index_y][index_x-1]->getPosition());
+                }
+                bombDetonate(objects_wall, index_x-1, index_y);
+                
+            }
+            else if (destructionCount > 0) {
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+            }
+        }
+
+        //ball color and destruction check for right side
+        if (index_x < 38 && objects_wall.wall_[index_y][index_x + 1] != nullptr) {
+            ball_right = objects_wall.wall_[index_y][index_x + 1]->getFillColor();
+            if (main_ball == ball_right) {
+                
+                destructionCount++;
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+                
+                destruction(objects_wall, index_x + 1, index_y, destructionCount);
+            }
+            else if (ball_right==sf::Color::Black){
+                if (objects_wall.wall_[index_y][index_x+1] != nullptr) {
+                    addPositionBomb(objects_wall.wall_[index_y][index_x+1]->getPosition());
+                }
+                bombDetonate(objects_wall, index_x+1, index_y);
+                
+            }
+            else if (destructionCount > 0) {
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+            }
+            
+        }
+
+        //ball color and destruction check for bottom side
+        if (index_y < 32 && objects_wall.wall_[index_y + 1][index_x] != nullptr) {
+            ball_bottom = objects_wall.wall_[index_y + 1][index_x]->getFillColor();
+            if (main_ball == ball_bottom) {
+
+                destructionCount++;
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+                
+                destruction( objects_wall, index_x, index_y + 1,destructionCount);
+            }
+            else if (ball_bottom==sf::Color::Black){
+                if (objects_wall.wall_[index_y+1][index_x] != nullptr) {
+                    addPositionBomb(objects_wall.wall_[index_y+1][index_x]->getPosition());
+                } 
+                bombDetonate(objects_wall, index_x, index_y+1);
+                
+            }
+            else if (destructionCount > 0) {
+                if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                    addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                    objects_wall.wall_[index_y][index_x] = nullptr;
+                    score_+=1;
+                }
+            }
+        }
+        else if (destructionCount > 0) {
+            if (objects_wall.wall_[index_y][index_x] != nullptr) {
+                addPositionBall(objects_wall.wall_[index_y][index_x]->getPosition());
+                objects_wall.wall_[index_y][index_x] = nullptr;
+                score_+=1;
+            }
+        }
+    }       
+
+void Game::animate(sf::RenderWindow &window){
+
+    if(detonation_==true){
+        if (!positionBomb_.empty()){
+            if (explosionTimer_ >= sf::seconds(0.01f) && explosionTimer_ < sf::seconds(0.50f))
+            {
+                for (int i = 0; i < positionBomb_.size(); i++)
+                {
+                    sf::Sprite bombSprite(bombTexture_);
+                    bombSprite.setOrigin(bombTexture_.getSize().x / 2.f, bombTexture_.getSize().y / 2.f);
+                    bombSprite.setScale(0.2f / resOfScreen*((explosionTimer_.asSeconds()-0.01f)/0.50f), 0.2f / resOfScreen*((explosionTimer_.asSeconds()-0.01f)/0.50f));
+                    float shakeMagnitude = 1.0f;  // Adjust the magnitude of the shaking effect
+                    float offsetX = (std::rand() % 2 == 0 ? -1 : 1) * shakeMagnitude;
+                    float offsetY = (std::rand() % 2 == 0 ? -1 : 1) * shakeMagnitude;
+
+                    bombSprite.setPosition(positionBomb_[i].x + (45.0f / 2 / resOfScreen) + offsetX,
+                                        positionBomb_[i].y + (45.f / resOfScreen) + (45.0f / 2 / resOfScreen) + offsetY);
+
+                    window.draw(bombSprite);
+                }
+            }
+            else if (explosionTimer_ >= sf::seconds(0.50f) && explosionTimer_ < sf::seconds(1.0f)){
+                for (int i=0; i<positionBall_.size();i++){
+                    sf::Sprite ballSprite(explosionTexture_);
+                    ballSprite.setOrigin(explosionTexture_.getSize().x / 2.f, explosionTexture_.getSize().y / 2.f);
+                    ballSprite.setScale(0.15f/resOfScreen*((explosionTimer_.asSeconds()-0.5f)/1.f), 0.15f/resOfScreen*((explosionTimer_.asSeconds()-0.5f)/1.f));
+                    ballSprite.setPosition(positionBall_[i].x+(45.0f/2/resOfScreen),positionBall_[i].y+(45.f/resOfScreen)+(45.0f/2/resOfScreen));
+                    window.draw(ballSprite);
+                }
+                
+            }
+            else if (explosionTimer_ > sf::seconds(1.0f) ){
+                explosionTimer_=sf::Time::Zero;
+                positionBomb_.clear();
+                positionBall_.clear();
+                detonation_=false;
+            }
+        }
+        else{
+            if (explosionTimer_ >= sf::seconds(0.001f) && explosionTimer_ < sf::seconds(0.65f))
+            {
+                for (int i=0; i<positionBall_.size();i++){
+                    sf::Sprite ballSprite(explosionTexture_);
+                    ballSprite.setOrigin(explosionTexture_.getSize().x / 2.f, explosionTexture_.getSize().y / 2.f);
+                    ballSprite.setScale(0.1f/resOfScreen*((explosionTimer_.asSeconds()-0.001f)/0.55f), 0.1f/resOfScreen*((explosionTimer_.asSeconds()-0.001f)/0.55f));
+                    ballSprite.setPosition(positionBall_[i].x+(45.0f/2/resOfScreen),positionBall_[i].y+(45.f/resOfScreen)+(45.0f/2/resOfScreen));
+                    window.draw(ballSprite);
+                }
+                
+            }
+            
+
+            else if (explosionTimer_ > sf::seconds(0.65f) ){
+                explosionTimer_=sf::Time::Zero;
+                positionBomb_.clear();
+                positionBall_.clear();
+                detonation_=false;
+            }
+        }
+        
+    }
+}
+
     //Start func to load all objects on window
-    void Game::start(Game_wall &objects_wall, Game_menu &objects_menu)
+void Game::start(Game_wall &objects_wall, Game_menu &objects_menu)
     {
-        setScore(0);
+        score_=0;
 
         initiateArrow();
         initiateRedLine(resOfScreen);
         initiateBlackLine(resOfScreen);
+        initiateDectructionTextures();
 
         int ball_start_height = 14;
 
@@ -756,24 +1009,32 @@ public:
 
     }
 
-    void Game::game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window, sf::Time &elapsed){
+void Game::game_play(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window, sf::Time &elapsed, sf::Clock &clock){
 
         moveShotBall (elapsed, objects_menu); //Moving ball with desired velocity sotred in velocityOfBall'
         borderColision(window, objects_menu); //Checking for border colision
-        if(ballColision(window, objects_menu, objects_wall)){; //Checking for colision with balls on wall and making new move
+        if(ballColision(window, objects_menu, objects_wall)){ //Checking for colision with balls on wall and making new move
             sf::Vector2f zero(0.f,0.f);
             velocityOfBall=zero;
+            
+            detonation_=false;
+            destruction(objects_wall, index_x_, index_y_, 0);
+            explosionTimer_ = sf::Time::Zero;
+            
+            detonation_=true;
+
             objects_menu.moveMenu(resOfScreen);
             objects_menu.addNewBall(score_,resOfScreen);
             objects_wall.moveWall(resOfScreen);
             objects_wall.addNewRow(score_, resOfScreen);
             touchingRedLine(window, objects_menu, objects_wall);
-            
-        }  
+        } 
+        float deltaTime = clock.restart().asSeconds();
+        explosionTimer_ += sf::seconds(deltaTime); 
     }
 
     //Displaying whole game here
-    void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
+void Game::dis(Game_wall &objects_wall, Game_menu &objects_menu, sf::RenderWindow &window)
     {
         //RedLine gets dipslayed here
         window.draw(redLine);
@@ -784,7 +1045,10 @@ public:
         //BlackLine gets dipslayed here
         window.draw(blackLine);
 
-            //Game wall displayed here
+        //Score display
+        scoreDisplay(window);
+
+        //Game wall displayed here
         for (int i = 0; i < objects_wall.getHeight(); i++) {
             for (int j = 0; j < objects_wall.getWidth(); j++) {
                 Object *object = objects_wall.wall_[i][j];
@@ -818,6 +1082,8 @@ public:
 
         }
         
+        //Animations displayed here
+        animate(window);
     }
 
 
@@ -861,7 +1127,7 @@ int main()
         game.FPS(clock, timePerFrame, elapsed);
 
         //function that controls whole game for player
-        game.game_play(objects_wall, objects_menu, window, elapsed);
+        game.game_play(objects_wall, objects_menu, window, elapsed, clock);
 
         // Clear the window
         window.clear(sf::Color(240, 220, 180));
